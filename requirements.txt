@@ -1,0 +1,5 @@
+pip install fastapi uvicorn
+pip install load_dotenv
+pip install elasticsearch
+pip install sentence_transformers
+pip install torch
