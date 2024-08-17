@@ -3,20 +3,20 @@ from app.core.config import config
 from app.services.embedding_service import get_embedding
 
 print(f"Connecting to Elasticsearch at {config.ES_HOST_URL} with basic auth username {config.ES_USERNAME} password {config.ES_PASSWORD}") 
-client = Elasticsearch(
-    [config.ES_HOST_URL],
-    basic_auth=(config.ES_USERNAME, config.ES_PASSWORD),
-    verify_certs=False,
-    ssl_show_warn=False
-)
+try:
+    client = Elasticsearch(
+        [config.ES_HOST_URL],
+        basic_auth=(config.ES_USERNAME, config.ES_PASSWORD),
+        verify_certs=False,
+        ssl_show_warn=False
+    )
+except Exception as e:
+    print(f"Error connecting to Elasticsearch: {str(e)}")
+    # Handle the error gracefully, e.g. log the error or show a user-friendly message
+    # You can also raise the exception again if you want the app to crash in case of connection failure
 client.info()
 
-def create_index(index_name, index_mapping):
-    if client.indices.exists(index=index_name):
-        client.indices.delete(index=index_name)
-    client.indices.create(index=index_name, mappings=index_mapping)
-
-def vector_search(cve_query: str):
+def vector_search(cve_query):
     question_embedding = get_embedding(cve_query)
     knn = {
         "field": "embedding",
@@ -24,7 +24,8 @@ def vector_search(cve_query: str):
         "k": 10,
         "num_candidates": 150,
     }
-    response = client.search(index=config.ELASTICSEARCH_INDEX, knn=knn, size=5)
+
+    response = client.search(index="cves", knn=knn, size=5)
     results = []
     for hit in response["hits"]["hits"]:
         id = hit["_id"]
@@ -38,4 +39,12 @@ def vector_search(cve_query: str):
             "cve_data": cve_data,
         }
         results.append(result)
-    return results
+
+    search_result = ""
+    for i, result in enumerate(results, 1):
+        search_result += (
+            f"{i}. **CVE ID**: {result.get('cve_id', 'N/A')}\n"
+            f"   **Description**: {result.get('cve_data', 'N/A')}\n\n"
+        )
+
+    return search_result
