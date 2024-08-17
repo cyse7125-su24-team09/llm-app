@@ -10,4 +10,5 @@ class Config:
     APP_PORT = int(os.getenv("APP_PORT"))
     HUGGINGFACE_TOKEN = os.getenv("HUGGINGFACE_TOKEN")
     ELASTICSEARCH_INDEX = os.getenv("ELASTICSEARCH_INDEX")
+    LLM_SERVER_URL = os.getenv("LLM_SERVER_URL")
 config = Config()
